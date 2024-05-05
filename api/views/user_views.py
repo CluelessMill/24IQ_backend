@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 
 from ..decorators.response import response_handler
 from ..utils.request_utils import check_not_none
-from ..utils.token_utils import AccessToken, check_res_to_error
+from ..utils.token_utils import AccessToken, to_message
 
 
 class ProfileAPIView(APIView):
@@ -20,9 +20,6 @@ class ProfileAPIView(APIView):
                 "profileImg": user.profile_img,
                 "info": user.info,
             }
-            return Response(response_data, status=201)  # Return profile info
+            return Response(response_data, status=201)
         else:
-            return Response(
-                check_res_to_error(result_code=check_res), status=401
-            )  # Return token error
-
+            return Response(to_message(result_code=check_res), status=401)

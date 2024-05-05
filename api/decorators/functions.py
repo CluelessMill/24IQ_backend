@@ -7,7 +7,6 @@ def test_function(function):
     def wrapper(*args, **kwargs):
         pr = Profile()
         pr.enable()
-        ic(function.__name__)
         res = function(*args, **kwargs)
 
         pr.disable()

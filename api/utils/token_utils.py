@@ -34,6 +34,15 @@ class Token:
 
     @classmethod
     def check(self: Self) -> User | int:
+        """
+        Check if token is valid
+
+        Args:
+            self (Self): Refresh/Access token object
+
+        Returns:
+            User | int: User if token is valid, error code otherwise
+        """
         try:
             decoded_content = decode(self.value, KEY, algorithms=["HS256"])
             expiration_time_str = decoded_content.get("expired", None)
@@ -44,11 +53,11 @@ class Token:
             real_type = decoded_content.get("token_type", None)
 
             if expiration_time is not None and current_time > expiration_time:
-                return -3  # Token expired
+                return -3  # ? Token expired
 
             real_type = decoded_content.get("token_type")
             if self.__name__ != real_type:
-                return -1  # Token invalid
+                return -1  # ? Token invalid
 
             user_id = decoded_content.get("user_id")
             creation_date_str = decoded_content.get("created")
@@ -59,12 +68,12 @@ class Token:
                         user=user, creation_date_str=creation_date_str
                     )
                 elif self.__name__ == "AccessToken":
-                    return user  # Token valid
+                    return user  # ? Token valid
 
-            return -1  # Token invalid
+            return -1  # ? Token invalid
         except Exception as e:
             ic(e)
-            return -1  # Token invalid
+            return -1  # ? Token invalid
 
     def _set_expiration_time(
         token_type: str, creation_time: datetime, user_id: int
@@ -90,6 +99,7 @@ class Token:
                 tzinfo=timezone.utc
             )
 
+            # ? This might be usefull for time normalization
             # session_created = session_created.replace(microsecond=0)
             # creation_date = creation_date.replace(microsecond=0)
             # if session_created.tzinfo != creation_date.tzinfo:
@@ -109,9 +119,9 @@ class Token:
             serializer = SessionsSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
-                return user  # Token valid
+                return user
             else:
-                return -1  # Token invalid
+                return -1
 
     def _type_check() -> bool:
         return ...
@@ -127,20 +137,20 @@ class AccessToken(Token):
     @classmethod
     def refresh(self: Self, refresh_token: RefreshToken) -> None | int:
         try:
-            refresh_check = refresh_token.check()
-            if refresh_check.__class__ != int:
-                user = refresh_check
+            check_res = refresh_token.check()
+            if check_res.__class__ != int:
+                user = check_res
                 access_token = AccessToken
                 access_token.create(user=user)
                 self.value = access_token.value
                 return None
             else:
-                return refresh_check
+                return check_res
         except Exception as e:
             return -1
 
 
-def check_res_to_error(result_code: int) -> str:
+def to_message(result_code: int) -> str:
     error_message = ""
     match result_code:
         case -3:

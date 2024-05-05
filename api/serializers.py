@@ -19,28 +19,28 @@ class PostSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         creation_date = validated_data.pop("creation_date", None)
-        news_instance = Post.objects.create(
+        post_instance = Post.objects.create(
             **validated_data, creation_date=creation_date
         )
-        folder_name = str(news_instance.news_id)
-        image_path = path.join("media", "news-images", folder_name)
+        folder_name = str(post_instance.id)
+        image_path = path.join("media", "post-images", folder_name)
         makedirs(name=image_path, exist_ok=True)
         self.move_uploaded_file(
-            uploaded_file=news_instance.logo_img,
+            uploaded_file=post_instance.logo_img,
             destination_path=path.join(image_path, "logo-img.jpg"),
         )
         self.move_uploaded_file(
-            uploaded_file=news_instance.main_img,
+            uploaded_file=post_instance.main_img,
             destination_path=path.join(image_path, "main-img.jpg"),
         )
-        news_instance.logo_img.name = path.join(
-            "news-images", folder_name, "logo-img.jpg"
+        post_instance.logo_img.name = path.join(
+            "post-images", folder_name, "logo-img.jpg"
         )
-        news_instance.main_img.name = path.join(
-            "news-images", folder_name, "main-img.jpg"
+        post_instance.main_img.name = path.join(
+            "post-images", folder_name, "main-img.jpg"
         )
-        news_instance.save()
-        return news_instance
+        post_instance.save()
+        return post_instance
 
     def move_uploaded_file(self, uploaded_file, destination_path):
         with open(file=uploaded_file.path, mode="rb") as source:

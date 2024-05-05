@@ -6,12 +6,11 @@ from dotenv import find_dotenv, load_dotenv
 
 load_dotenv(dotenv_path=find_dotenv())
 
-DB_PASSWORD = getenv(key="PG_PASSWORD")
-DB_USER = getenv(key="PG_USER")
-DB_HOST = getenv(key="PG_HOST")
-DB_NAME = getenv(key="PG_DATABASE")
-DB_PORT = getenv(key="PG_PORT")
-SECRET_KEY = getenv(key="SECRET_KEY")
+DB_PASSWORD = getenv(key="PGPASSWORD")
+DB_USER = getenv(key="PGUSER")
+DB_HOST = getenv(key="PGHOST")
+DB_NAME = getenv(key="PGDATABASE")
+DB_PORT = getenv(key="PGPORT")
 SECRET_KEY = getenv(key="SECRET_KEY")
 ACCESS_TOKEN_PERIOD = int(getenv(key="ACCESS_TOKEN_PERIOD"))
 REFRESH_TOKEN_PERIOD = int(getenv(key="REFRESH_TOKEN_PERIOD"))
