@@ -7,6 +7,7 @@ from .views.auth_views import (
     SignUpAPIView,
     UpdateTokenAPIView,
     UserListDEBUG,
+    LogOutAPIView
 )
 from .views.posts_views import PostAddAPIViews, PostCommentsAPIView, PostListAPIView
 from .views.roles_views import (
@@ -30,6 +31,7 @@ urlpatterns = [
     path("auth/signup", SignUpAPIView.as_view(), name="sign-up"),
     path("auth/signin", SignInAPIView.as_view(), name="sign-in"),
     path("auth/refresh", UpdateTokenAPIView.as_view(), name="refresh-token"),
+    path("auth/logout", LogOutAPIView.as_view(), name="logout"),
     # * User
     path("users/profile", ProfileAPIView.as_view(), name="profile"),
     # ! Debug

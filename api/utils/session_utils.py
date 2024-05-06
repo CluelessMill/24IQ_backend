@@ -20,3 +20,9 @@ def session_update(creation_time: datetime, user_id: int) -> None | str:
         serializer.save()
     else:
         raise Exception(serializer.errors)
+
+def session_delete(user_id: int) -> None:
+    existing_session = Sessions.objects.filter(user=user_id).first()
+    if existing_session:
+        existing_session.delete()
+    return 0

@@ -1,3 +1,4 @@
+from urllib import response
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -108,17 +109,19 @@ class UpdateTokenAPIView(APIView):
         if error:
             return Response({"message": to_message(result_code=error)}, status=400)
         else:
-            # TODO send cookie token
-            return Response({"accessToken": access_token.value}, status=201)
+            response = Response(data=None, status=201)
+            response.set_cookie(key="accessToken", value=access_token.value)
+            return response
 
 
 class LogOutAPIView(APIView):
     @response_handler
     def put(self, request):
-
-        # TODO Implementation
-
-        pass
+        refresh_token_req = request.COOKIES.get("refreshToken")
+        check_not_none((refresh_token_req, "refreshToken"))
+        refresh_token = RefreshToken(token_value=refresh_token_req)
+        refresh_token.delete()
+        return Response({"message": "Success"}, status=201)
 
 
 class UserListDEBUG(APIView):  #! This must be removed in production
