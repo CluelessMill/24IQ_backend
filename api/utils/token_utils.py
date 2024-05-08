@@ -1,3 +1,4 @@
+from calendar import c
 from datetime import datetime, timedelta, timezone
 from typing import Self
 from icecream import ic
@@ -7,7 +8,7 @@ from jwt import decode, encode
 
 from ..models import Sessions, User
 from ..serializers import SessionsSerializer
-from .session_utils import session_update
+from .session_utils import session_update, session_delete
 from .user_utils import authenticate_user
 
 KEY = settings.JWT_KEY
@@ -16,10 +17,22 @@ KEY = settings.JWT_KEY
 class Token:
     @classmethod
     def __init__(self: Self, token_value: str) -> None:
+        """_summary_
+
+        Args:
+            self (Self): _description_
+            token_value (str): _description_
+        """
         self.value = token_value
 
     @classmethod
     def create(self: Self, user: User) -> None:
+        """_summary_
+
+        Args:
+            self (Self): _description_
+            user (User): _description_
+        """
         creation_time = datetime.utcnow().replace(tzinfo=timezone.utc)
         expiration_time = self._set_expiration_time(
             token_type=self.__name__, creation_time=creation_time, user_id=user.id
@@ -78,11 +91,24 @@ class Token:
     def _set_expiration_time(
         token_type: str, creation_time: datetime, user_id: int
     ) -> datetime:
-        if token_type.startswith("A"):  # Access token
+        """_summary_
+
+        Args:
+            token_type (str): _description_
+            creation_time (datetime): _description_
+            user_id (int): _description_
+
+        Raises:
+            Exception: _description_
+
+        Returns:
+            datetime: _description_
+        """
+        if token_type.startswith("A"):  # ? Access token
             expiration_time = creation_time + timedelta(
                 minutes=settings.ACCESS_TOKEN_PERIOD
             )
-        elif token_type.startswith("R"):  # Refresh token
+        elif token_type.startswith("R"):  # ? Refresh token
             expiration_time = creation_time + timedelta(
                 days=settings.REFRESH_TOKEN_PERIOD
             )
@@ -92,6 +118,15 @@ class Token:
         return expiration_time
 
     def _validate_refresh_token(user: User, creation_date_str: str) -> User | Exception:
+        """_summary_
+
+        Args:
+            user (User): _description_
+            creation_date_str (str): _description_
+
+        Returns:
+            User | Exception: _description_
+        """
         try:
             session = Sessions.objects.get(user=user.id)
             session_created = session.created_at
@@ -109,19 +144,18 @@ class Token:
             # creation_date = creation_date.replace(tzinfo=None)
 
             if session_created == creation_date:
-                return user  # Token valid
+                return user  # ? Token valid
             else:
-                # return -2  # Token annulled
-                return Exception()
+                return -2  # ? Token annulled
         except Sessions.DoesNotExist:
             creation_date = datetime.strptime(creation_date_str, "%Y-%m-%dT%H:%M:%S.%f")
             data = {"user": user, "created_at": creation_date}
             serializer = SessionsSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
-                return user
+                return user  # ? Token valid
             else:
-                return -1
+                return -1  # ? Token invalid
 
     def _type_check() -> bool:
         return ...
@@ -129,6 +163,14 @@ class Token:
 
 class RefreshToken(Token):
     value = str
+
+    @classmethod
+    def delete(self: Self) -> None:
+        check_res = self.check()
+        if check_res.__class__ == int:
+            return check_res
+        user = check_res
+        session_delete(user_id=user.id)
 
 
 class AccessToken(Token):
@@ -147,7 +189,7 @@ class AccessToken(Token):
             else:
                 return check_res
         except Exception as e:
-            return -1
+            return -1  # ? Token invalid
 
 
 def to_message(result_code: int) -> str:

@@ -4,6 +4,11 @@ from ..models import User
 from .cript_utils import check_password, decrypt, encrypt
 
 
+class Auth:
+    # TODO define various types of authtentification
+    pass
+
+
 def authenticate_user(
     nickname: str = None, user_id: int = None, password: str = None, email: str = None
 ) -> User | None:
