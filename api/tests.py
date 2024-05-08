@@ -7,7 +7,7 @@ from rest_framework.test import APIClient
 from .decorators.functions import test_function
 
 
-class AuthAPITest(TestCase):
+class ServerAPITest(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
 
@@ -70,9 +70,8 @@ class AuthAPITest(TestCase):
         test_sign_in(self=self)
         test_refresh_token(self=self)
 
-    # @test_function
+    @test_function
     def test_roles(self) -> None:
-        # ? Get/Create new token after role change
         def test_role_set(self) -> None:
             ic("Role set test")
             url = reverse(viewname="role-set")
@@ -139,6 +138,7 @@ class AuthAPITest(TestCase):
         test_role_list(self=self)
         test_is_admin(self=self)
 
+    @test_function
     def test_posts(self):
         def test_receive_posts(self):
             ic("Receive posts test")
