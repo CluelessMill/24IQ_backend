@@ -31,8 +31,8 @@ def posts_tests(self) -> None:
         ic("With permission")
         nickname, cookie_value = self._init_profile(user="admin")
         self._set_role_DEBUG(new_role="admin", nickname=nickname)
-        with open(file="./api/testing/data/logo.jpg", mode="rb") as logo_file, open(
-            file="./api/testing/data/main.jpg", mode="rb"
+        with open(file="./src/api/testing/data/logo.jpg", mode="rb") as logo_file, open(
+            file="./src/api/testing/data/main.jpg", mode="rb"
         ) as main_img_file:
             new_post_data = {
                 "title": "Test",

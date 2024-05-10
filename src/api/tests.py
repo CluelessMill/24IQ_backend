@@ -9,14 +9,33 @@ from .testing.auth_tests import auth_test
 from .testing.roles_tests import roles_test
 from .testing.posts_tests import posts_tests
 from logging import basicConfig, debug, DEBUG
+from os import path, makedirs, listdir, unlink, rmdir
 
-basicConfig(filename="./api/tests_statistic/logs.log", level=DEBUG)
-ic.configureOutput(prefix="[IC] ", outputFunction=debug)
+
+def init_log():
+    directory = "./src/api/tests_statistic"
+    if path.exists(directory):
+        for filename in listdir(directory):
+            file_path = path.join(directory, filename)
+            try:
+                if path.isfile(file_path):
+                    unlink(file_path)
+                elif path.isdir(file_path):
+                    rmdir(file_path)
+            except Exception as e:
+                print(e)
+    else:
+        makedirs(directory)
+
+    basicConfig(filename="./src/api/tests_statistic/logs.log", level=DEBUG)
+
+    ic.configureOutput(prefix="[IC] ", outputFunction=debug)
 
 
 class ServerAPITest(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
+        init_log()
 
     def _receive_tokens(self, user: str):
         admin_data = {"email": "admin", "password": "admin"}
