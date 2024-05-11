@@ -1,4 +1,3 @@
-from calendar import c
 from datetime import datetime, timedelta, timezone
 from typing import Self
 from icecream import ic
@@ -8,7 +7,7 @@ from jwt import decode, encode
 
 from ..models import Sessions, User
 from ..serializers import SessionsSerializer
-from .session_utils import session_update, session_delete
+from .session_utils import session_update
 from .user_utils import authenticate_user
 
 KEY = settings.JWT_KEY
@@ -17,21 +16,33 @@ KEY = settings.JWT_KEY
 class Token:
     @classmethod
     def __init__(self: Self, token_value: str) -> None:
-        """_summary_
+        """
+        Initializes a token with the provided value
 
-        Args:
-            self (Self): _description_
-            token_value (str): _description_
+        Parameters:
+            token_value (str): The value of the token
+
+        Returns:
+            None
+
+        Raises:
+            None
         """
         self.value = token_value
 
     @classmethod
     def create(self: Self, user: User) -> None:
-        """_summary_
+        """
+        Creates a new token for the specified user
 
-        Args:
-            self (Self): _description_
-            user (User): _description_
+        Parameters:
+            user (User): The user for whom the token is being created
+
+        Returns:
+            None
+
+        Raises:
+            None
         """
         creation_time = datetime.utcnow().replace(tzinfo=timezone.utc)
         expiration_time = self._set_expiration_time(
@@ -48,13 +59,13 @@ class Token:
     @classmethod
     def check(self: Self) -> User | int:
         """
-        Check if token is valid
-
-        Args:
-            self (Self): Refresh/Access token object
+        Checks the validity of the token and returns the associated user if valid
 
         Returns:
-            User | int: User if token is valid, error code otherwise
+            User or int: The associated user if token is valid, otherwise an error code
+
+        Raises:
+            None
         """
         try:
             decoded_content = decode(self.value, KEY, algorithms=["HS256"])
@@ -66,11 +77,11 @@ class Token:
             real_type = decoded_content.get("token_type", None)
 
             if expiration_time is not None and current_time > expiration_time:
-                return -3  # ? Token expired
+                return -3  # Token expired
 
             real_type = decoded_content.get("token_type")
             if self.__name__ != real_type:
-                return -1  # ? Token invalid
+                return -1  # Token invalid
 
             user_id = decoded_content.get("user_id")
             creation_date_str = decoded_content.get("created")
@@ -81,34 +92,35 @@ class Token:
                         user=user, creation_date_str=creation_date_str
                     )
                 elif self.__name__ == "AccessToken":
-                    return user  # ? Token valid
+                    return user  # Token valid
 
-            return -1  # ? Token invalid
+            return -1  # Token invalid
         except Exception as e:
             ic(e)
-            return -1  # ? Token invalid
+            return -1  # Token invalid
 
     def _set_expiration_time(
         token_type: str, creation_time: datetime, user_id: int
     ) -> datetime:
-        """_summary_
+        """
+        Sets the expiration time for the token based on its type
 
-        Args:
-            token_type (str): _description_
-            creation_time (datetime): _description_
-            user_id (int): _description_
-
-        Raises:
-            Exception: _description_
+        Parameters:
+            token_type (str): The type of the token
+            creation_time (datetime): The creation time of the token
+            user_id (int): The ID of the user associated with the token
 
         Returns:
-            datetime: _description_
+            datetime: The expiration time of the token
+
+        Raises:
+            Exception: If an invalid token type is given
         """
         if token_type.startswith("A"):  # ? Access token
             expiration_time = creation_time + timedelta(
                 minutes=settings.ACCESS_TOKEN_PERIOD
             )
-        elif token_type.startswith("R"):  # ? Refresh token
+        elif token_type.startswith("R"):  # Refresh token
             expiration_time = creation_time + timedelta(
                 days=settings.REFRESH_TOKEN_PERIOD
             )
@@ -118,14 +130,18 @@ class Token:
         return expiration_time
 
     def _validate_refresh_token(user: User, creation_date_str: str) -> User | Exception:
-        """_summary_
+        """
+        Validates the refresh token
 
-        Args:
-            user (User): _description_
-            creation_date_str (str): _description_
+        Parameters:
+            user (User): The user associated with the refresh token
+            creation_date_str (str): The creation date of the token in string format
 
         Returns:
-            User | Exception: _description_
+            User or Exception: The associated user if token is valid, otherwise an error
+
+        Raises:
+            None
         """
         try:
             session = Sessions.objects.get(user=user.id)
@@ -134,7 +150,6 @@ class Token:
                 tzinfo=timezone.utc
             )
 
-            # ? This might be usefull for time normalization
             # session_created = session_created.replace(microsecond=0)
             # creation_date = creation_date.replace(microsecond=0)
             # if session_created.tzinfo != creation_date.tzinfo:
@@ -144,21 +159,19 @@ class Token:
             # creation_date = creation_date.replace(tzinfo=None)
 
             if session_created == creation_date:
-                return user  # ? Token valid
+                return user  # Token valid
             else:
-                return -2  # ? Token annulled
+                # return -2  # Token annulled
+                return Exception()
         except Sessions.DoesNotExist:
             creation_date = datetime.strptime(creation_date_str, "%Y-%m-%dT%H:%M:%S.%f")
             data = {"user": user, "created_at": creation_date}
             serializer = SessionsSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
-                return user  # ? Token valid
+                return user  # Token valid
             else:
-                return -1  # ? Token invalid
-
-    def _type_check() -> bool:
-        return ...
+                return -1  # Token invalid
 
 
 class RefreshToken(Token):
@@ -166,6 +179,15 @@ class RefreshToken(Token):
 
     @classmethod
     def delete(self: Self) -> None:
+        """
+        Deletes the refresh token and its associated session
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
         check_res = self.check()
         if check_res.__class__ == int:
             return check_res
@@ -178,6 +200,18 @@ class AccessToken(Token):
 
     @classmethod
     def refresh(self: Self, refresh_token: RefreshToken) -> None | int:
+        """
+        Refreshes the access token using the provided refresh token
+
+        Parameters:
+            refresh_token (RefreshToken): The refresh token to use for refreshing
+
+        Returns:
+            None or int: None if the operation is successful, otherwise an error code
+
+        Raises:
+            None
+        """
         try:
             check_res = refresh_token.check()
             if check_res.__class__ != int:
@@ -187,12 +221,24 @@ class AccessToken(Token):
                 self.value = access_token.value
                 return None
             else:
-                return check_res
+                return refresh_check
         except Exception as e:
-            return -1  # ? Token invalid
+            return -1
 
 
 def to_message(result_code: int) -> str:
+    """
+    Converts the result code into an error message
+
+    Parameters:
+        result_code (int): The result code indicating the error
+
+    Returns:
+        str: The corresponding error message
+
+    Raises:
+        None
+    """
     error_message = ""
     match result_code:
         case -3:

@@ -4,14 +4,24 @@ from ..models import User
 from .cript_utils import check_password, decrypt, encrypt
 
 
-class Auth:
-    # TODO define various types of authtentification
-    pass
-
-
 def authenticate_user(
     nickname: str = None, user_id: int = None, password: str = None, email: str = None
 ) -> User | None:
+    """
+    Authenticates a user based on provided credentials
+
+    Parameters:
+        nickname (str, optional): The nickname of the user
+        user_id (int, optional): The ID of the user
+        password (str, optional): The password of the user
+        email (str, optional): The email of the user
+
+    Returns:
+        User or None: The authenticated user if successful, otherwise None
+
+    Raises:
+        None
+    """
     try:
         user = None
         if nickname is not None and password is not None:
@@ -47,6 +57,19 @@ def check_user(nickname: str, password: str) -> bool:
 
 
 def check_is_unique(nickname: str = None, email: str = None) -> bool:
+    """
+    Checks if the provided nickname or email is unique in the database
+
+    Parameters:
+        nickname (str, optional): The nickname to be checked
+        email (str, optional): The email to be checked
+
+    Returns:
+        bool: True if the nickname or email is unique, otherwise False
+
+    Raises:
+        None
+    """
     if email is not None:
         try:
             User.objects.get(email=encrypt(data=email))
@@ -62,6 +85,18 @@ def check_is_unique(nickname: str = None, email: str = None) -> bool:
 
 
 def generate_nickname(email: str) -> str:
+    """
+    Generates a nickname from the provided email
+
+    Parameters:
+        email (str): The email used to generate the nickname
+
+    Returns:
+        str: The generated nickname
+
+    Raises:
+        None
+    """
     vowels = "aeiou"
     consonants = "bcdfghjklmnpqrstvwxyz"
     hashed_email = sha256(string=email.encode()).hexdigest()
