@@ -14,9 +14,9 @@ from ..utils.user_utils import authenticate_user, check_is_unique, generate_nick
 class SignInAPIView(APIView):
     @response_handler
     def post(self, request) -> Response:
-        password = request.data.get("password", "")
-        nickname = request.data.get("nickname", "")
-        email = request.data.get("email", "")
+        password: str = request.data.get("password", "")
+        nickname: str = request.data.get("nickname", "")
+        email: str = request.data.get("email", "")
 
         if not nickname:
             nickname = None
@@ -25,9 +25,11 @@ class SignInAPIView(APIView):
             email = None
             check_not_none((password, "password"), (nickname, "nickname"))
 
-        user = authenticate_user(nickname=nickname, password=password, email=email)
+        user: User = authenticate_user(
+            nickname=nickname, password=password, email=email
+        )
         if user:
-            profile_img = user.profile_img
+            profile_img: str = user.profile_img
             access_token, refresh_token = AccessToken, RefreshToken
             access_token.create(user=user)
             refresh_token.create(user=user)
@@ -46,7 +48,7 @@ class SignInAPIView(APIView):
             return response
         else:
             return Response(
-                {
+                data={
                     "message": f"Invalid {'nickname' if not email else 'email'} or password."
                 },
                 status=400,
@@ -56,16 +58,16 @@ class SignInAPIView(APIView):
 class SignUpAPIView(APIView):
     @response_handler
     def post(self, request) -> Response:
-        password = request.data.get("password", "")
-        email = request.data.get("email", "")
+        password: str = request.data.get("password", "")
+        email: str = request.data.get("email", "")
         check_not_none((password, "password"), (email, "email"))
 
         if not email:
-            return Response("Not enough data", status=400)
+            return Response(data="Not enough data", status=400)
         if not check_is_unique(email=email):
-            return Response("Email already exists", status=400)
+            return Response(data="Email already exists", status=400)
 
-        nickname = generate_nickname(email=email)
+        nickname: str = generate_nickname(email=email)
 
         # TODO add profile image generation function
 
@@ -76,8 +78,8 @@ class SignUpAPIView(APIView):
         }
         serializer = UserSerializer(data=input_data)
         if serializer.is_valid():
-            user = serializer.save()
-            profile_img = user.profile_img
+            user: User = serializer.save()
+            profile_img: str = user.profile_img
             access_token, refresh_token = AccessToken, RefreshToken
             access_token.create(user=user)
             refresh_token.create(user=user)
@@ -95,19 +97,19 @@ class SignUpAPIView(APIView):
             response.set_cookie(key="accessToken", value=access_token.value)
             return response
         else:
-            return Response("An error occurred", status=500)
+            return Response(data={"message": "An error occurred"}, status=500)
 
 
 class UpdateTokenAPIView(APIView):
     @response_handler
     def put(self, request) -> Response:
-        refresh_token_req = request.COOKIES.get("refreshToken")
+        refresh_token_req: str = request.COOKIES.get("refreshToken")
         check_not_none((refresh_token_req, "refreshToken"))
         access_token = AccessToken
         refresh_token = RefreshToken(token_value=refresh_token_req)
         error = access_token.refresh(refresh_token)
         if error:
-            return Response({"message": to_message(result_code=error)}, status=400)
+            return Response(data={"message": to_message(result_code=error)}, status=400)
         else:
             response = Response(data=None, status=201)
             response.set_cookie(key="accessToken", value=access_token.value)
@@ -116,12 +118,12 @@ class UpdateTokenAPIView(APIView):
 
 class LogOutAPIView(APIView):
     @response_handler
-    def put(self, request):
-        refresh_token_req = request.COOKIES.get("refreshToken")
+    def put(self, request) -> Response:
+        refresh_token_req: str = request.COOKIES.get("refreshToken")
         check_not_none((refresh_token_req, "refreshToken"))
         refresh_token = RefreshToken(token_value=refresh_token_req)
         refresh_token.delete()
-        return Response({"message": "Success"}, status=201)
+        return Response(data={"message": "Success"}, status=201)
 
 
 class UserListDEBUG(APIView):  #! This must be removed in production

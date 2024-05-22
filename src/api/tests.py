@@ -12,32 +12,35 @@ from logging import basicConfig, debug, DEBUG
 from os import path, makedirs, listdir, unlink, rmdir
 
 
-def init_log():
+def init_log() -> None:
     directory = "./src/api/tests_statistic"
-    if path.exists(directory):
-        for filename in listdir(directory):
+    if path.exists(path=directory):
+        for filename in listdir(path=directory):
             file_path = path.join(directory, filename)
             try:
-                if path.isfile(file_path):
-                    unlink(file_path)
-                elif path.isdir(file_path):
-                    rmdir(file_path)
+                if path.isfile(path=file_path):
+                    unlink(path=file_path)
+                elif path.isdir(s=file_path):
+                    rmdir(path=file_path)
             except Exception as e:
                 print(e)
     else:
-        makedirs(directory)
+        makedirs(name=directory)
 
     basicConfig(filename="./src/api/tests_statistic/logs.log", level=DEBUG)
 
     ic.configureOutput(prefix="[IC] ", outputFunction=debug)
 
 
+init_log()
+
+
 class ServerAPITest(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
-        init_log()
+        # init_log()
 
-    def _receive_tokens(self, user: str):
+    def _receive_tokens(self, user: str) -> HttpResponse:
         admin_data = {"email": "admin", "password": "admin"}
         user_data = {"email": "user", "password": "user"}
         data = admin_data if user == "admin" else user_data
@@ -59,7 +62,7 @@ class ServerAPITest(TestCase):
         cookie_value = token_request.cookies["accessToken"].value
         return nickname, cookie_value
 
-    def _set_role_DEBUG(self, new_role: str, nickname: str):
+    def _set_role_DEBUG(self, new_role: str, nickname: str) -> None:
         url = reverse(viewname="role-set-deb")
         data = {"role": new_role, "nickname": nickname}
         response = self.client.put(path=url, data=data, format="json")
@@ -74,5 +77,5 @@ class ServerAPITest(TestCase):
         roles_test(self=self)
 
     @test_function
-    def test_posts(self):
+    def test_posts(self) -> None:
         posts_tests(self=self)

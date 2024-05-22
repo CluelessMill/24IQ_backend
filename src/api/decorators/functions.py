@@ -25,7 +25,7 @@ def test_function(function):
         pr.disable()
         stats = Stats(pr)
         stats.sort_stats(SortKey.TIME)
-        stats.dump_stats(filename=f"./api/tests_statistic/{function.__name__}.prof")
+        stats.dump_stats(filename=f"./src/api/tests_statistic/{function.__name__}.prof")
         return res
 
     return wrapper
