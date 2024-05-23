@@ -1,5 +1,3 @@
-import stat
-from tabnanny import check
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -7,19 +5,21 @@ from ..decorators.response import response_handler
 from ..models import User
 from ..utils.cript_utils import decrypt, encrypt
 from ..utils.request_utils import check_not_none
-from ..utils.roles_utils import admin_check
 from ..utils.token_utils import AccessToken, to_message
 
 
 class RoleListAPIView(APIView):
     @response_handler
     def get(self, request) -> Response:
-        token_req = request.COOKIES.get("accessToken")
+        token_req: str = request.COOKIES.get("accessToken")
         check_not_none((token_req, "accessToken"))
+
         token = AccessToken(token_value=token_req)
-        check_res = token.check()
+        check_res: User = token.check()
         if check_res.__class__ == int:
-            return Response({"message": to_message(result_code=check_res)}, status=400)
+            return Response(
+                data={"message": to_message(result_code=check_res)}, status=400
+            )
         user_role = check_res.role
         if user_role != "admin":
             return Response(data={"message": "You don't have a permission"}, status=400)
@@ -39,15 +39,17 @@ class RoleListAPIView(APIView):
 class RoleSetAPIView(APIView):
     @response_handler
     def put(self, request) -> Response:
-        nickname = request.data.get("nickname", "")
-        token_req = request.COOKIES.get("accessToken")
-        new_role = request.data.get("role", "")
+        nickname: str = request.data.get("nickname", "")
+        token_req: str = request.COOKIES.get("accessToken")
+        new_role: str = request.data.get("role", "")
         check_not_none((nickname, "nickname"), (token_req, "token"), (new_role, "role"))
 
         token = AccessToken(token_value=token_req)
-        check_res = token.check()
+        check_res: int | User = token.check()
         if check_res.__class__ == int:
-            return Response({"message": to_message(result_code=check_res)}, status=400)
+            return Response(
+                data={"message": to_message(result_code=check_res)}, status=400
+            )
         user_role = check_res.role
         if user_role != "admin":
             return Response(data={"message": "You don't have a permission"}, status=400)
@@ -63,12 +65,15 @@ class RoleSetAPIView(APIView):
 class IsAdminAPIView(APIView):
     @response_handler
     def get(self, request) -> Response:
-        token_req = request.COOKIES.get("accessToken")
+        token_req: str = request.COOKIES.get("accessToken")
         check_not_none((token_req, "accessToken"))
+
         token = AccessToken(token_value=token_req)
-        check_res = token.check()
+        check_res: int | User = token.check()
         if check_res.__class__ == int:
-            return Response({"message": to_message(result_code=check_res)}, status=400)
+            return Response(
+                data={"message": to_message(result_code=check_res)}, status=400
+            )
         user_role = check_res.role
         return Response(data={"isAdmin": user_role == "admin"}, status=200)
 
@@ -76,11 +81,12 @@ class IsAdminAPIView(APIView):
 class RoleSetDEBUGAPIView(APIView):  #! This must be removed in production
     @response_handler
     def put(self, request) -> Response:
-        nickname = request.data.get("nickname", "")
-        new_role = request.data.get("role", "")
+        nickname: str = request.data.get("nickname", "")
+        new_role: str = request.data.get("role", "")
         check_not_none((nickname, "nickname"), (new_role, "role"))
+
         try:
-            user = User.objects.get(nickname=encrypt(data=nickname))
+            user: User = User.objects.get(nickname=encrypt(data=nickname))
             user.role = new_role
             user.save()
         except User.DoesNotExist:

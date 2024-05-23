@@ -42,7 +42,7 @@ class PostListAPIView(APIView):
                 "comments": comments_list,
             }
             posts_list.append(posts_dict)
-        return Response(posts_list)
+        return Response(data=posts_list)
 
 
 class PostAddAPIViews(APIView):
@@ -71,7 +71,7 @@ class PostAddAPIViews(APIView):
         check_res = token.check()
 
         if check_res.__class__ == int:
-            return Response(to_message(result_code=check_res), status=401)
+            return Response(data=to_message(result_code=check_res), status=401)
         user_role = check_res.role
         if user_role != "admin":
             return Response(data={"message": "You don't have a permission"}, status=400)
@@ -88,10 +88,10 @@ class PostAddAPIViews(APIView):
 
         if serializer.is_valid():
             saved_post = serializer.save()
-            return Response(saved_post.id, status=201)
+            return Response(data=saved_post.id, status=201)
         else:
             ic(serializer.errors)
-            return Response("An error occurred", status=400)
+            return Response(data="An error occurred", status=400)
 
 
 class PostCommentsAPIView(APIView):
@@ -100,16 +100,18 @@ class PostCommentsAPIView(APIView):
         post_id = request.data.get("id", "")
         text = request.data.get("text", "")
         access_token_req = request.COOKIES.get("accessToken")
-        check_not_none((post_id, "post_id"), (text, "text"), (access_token_req, "accessToken"))
+        check_not_none(
+            (post_id, "post_id"), (text, "text"), (access_token_req, "accessToken")
+        )
 
         access_token = AccessToken(token_value=access_token_req)
         check_res = access_token.check()
         if check_res.__class__ == int:
-            return Response(to_message(result_code=check_res), status=401)
+            return Response(data=to_message(result_code=check_res), status=401)
         try:
             post = Post.objects.get(id=post_id)
         except Post.DoesNotExist:
-            return Response("An error occurred", status=400)
+            return Response(data="An error occurred", status=400)
 
         user = check_res
         creation_date = datetime.utcnow().date()
@@ -123,12 +125,12 @@ class PostCommentsAPIView(APIView):
         if serializer.is_valid():
             serializer.save()
             post.comments.add(serializer.instance)
-            return Response(serializer.data, status=201)
+            return Response(data=serializer.data, status=201)
         else:
             ic(serializer.errors)
-            return Response("An error occurred", status=400)
+            return Response(data="An error occurred", status=400)
 
-    def get(self, request):
+    def get(self, request) -> None:
         # TODO Implement comments for one post with given id only
         pass
 
