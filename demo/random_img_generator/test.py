@@ -20,13 +20,13 @@ palette = [
 
 def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip("#")
-    return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+    return tuple(int(hex_color[i : i + 2], base=16) for i in (0, 2, 4))
 
 
 def encode_string_to_image(text: str, image_size: int) -> Image.Image:
     square_count = ceil(sqrt(len(text)))
     image = Image.new(mode="RGB", size=(image_size, image_size), color="white")
-    draw = ImageDraw.Draw(image)
+    draw = ImageDraw.Draw(im=image)
     square_size = image_size // square_count
     for i, char in enumerate(iterable=text):
         row = i // square_count

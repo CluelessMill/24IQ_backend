@@ -24,26 +24,28 @@ def authenticate_user(
     """
     try:
         user = None
-        if nickname is not None and password is not None:
-            user = User.objects.get(nickname=encrypt(data=nickname))
-            if not check_password(
+        if password is not None:
+            if nickname is not None:
+                encrypted_nickname = encrypt(data=nickname)
+                user = User.objects.get(nickname=encrypted_nickname)
+            elif email is not None:
+                encrypted_email = encrypt(data=email)
+                user = User.objects.get(email=encrypted_email)
+
+            if user and not check_password(
                 input_password=password, stored_password=user.password.tobytes()
             ):
-                user = None
-        elif email is not None and password is not None:
-            user = User.objects.get(email=encrypt(data=email))
-            if not check_password(
-                input_password=password, stored_password=user.password.tobytes()
-            ):
-                user = None
-        elif nickname is None and email is None:
+                return None
+        elif user_id is not None:
             user = User.objects.get(id=user_id)
 
         if not user:
             return None
+
         user.nickname = decrypt(data=user.nickname.tobytes())
         user.email = decrypt(data=user.email.tobytes())
         return user
+
     except User.DoesNotExist:
         return None
 
@@ -70,18 +72,14 @@ def check_is_unique(nickname: str = None, email: str = None) -> bool:
     Raises:
         None
     """
-    if email is not None:
-        try:
+    try:
+        if email is not None:
             User.objects.get(email=encrypt(data=email))
-            return False
-        except User.DoesNotExist:
-            return True
-    else:
-        try:
-            User.objects.get(nickname=encrypt(nickname))
-            return False
-        except User.DoesNotExist:
-            return True
+        else:
+            User.objects.get(nickname=encrypt(data=nickname))
+        return False
+    except User.DoesNotExist:
+        return True
 
 
 def generate_nickname(email: str) -> str:
@@ -100,18 +98,22 @@ def generate_nickname(email: str) -> str:
     vowels = "aeiou"
     consonants = "bcdfghjklmnpqrstvwxyz"
     hashed_email = sha256(string=email.encode()).hexdigest()
-    hashed_email = [(chr(int(i) + 97) if i.isdigit() else i) for i in hashed_email]
     nickname = ""
+    is_consonant_turn = True
     for char in hashed_email:
         if len(nickname) >= 15:
             break
-        if char in consonants:
-            nickname += char
-            if len(nickname) < 15:
-                nickname += vowels[int(ord(char)) % len(vowels)]
-        elif char in vowels:
-            nickname += consonants[int(ord(char)) % len(consonants)]
+        if char.isdigit():
+            index = int(char)
+        else:
+            index = ord(char) % 16
+        if is_consonant_turn:
+            nickname += consonants[index % len(consonants)]
+        else:
+            nickname += vowels[index % len(vowels)]
+        is_consonant_turn = not is_consonant_turn
     while len(nickname) < 15:
-        nickname += consonants[int(hashed_email[0], base=16) % len(consonants)]
-
+        nickname += consonants[
+            int(sha256(string=nickname.encode()).hexdigest()[0], base=16) % len(consonants)
+        ]
     return nickname

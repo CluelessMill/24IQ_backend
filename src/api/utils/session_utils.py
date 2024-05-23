@@ -34,6 +34,7 @@ def session_update(creation_time: datetime, user_id: int) -> None | str:
     else:
         raise Exception(serializer.errors)
 
+
 def session_delete(user_id: int) -> None:
     """
     Deletes the session associated with the specified user

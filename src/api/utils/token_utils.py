@@ -7,7 +7,7 @@ from jwt import decode, encode
 
 from ..models import Sessions, User
 from ..serializers import SessionsSerializer
-from .session_utils import session_update
+from .session_utils import session_update, session_delete
 from .user_utils import authenticate_user
 
 KEY = settings.JWT_KEY
@@ -54,7 +54,7 @@ class Token:
             "created": creation_time.isoformat(),
             "expired": expiration_time.isoformat(),
         }
-        self.value = encode(payload, KEY, algorithm="HS256")
+        self.value = encode(payload=payload, key=KEY, algorithm="HS256")
 
     @classmethod
     def check(self: Self) -> User | int:
@@ -68,7 +68,7 @@ class Token:
             None
         """
         try:
-            decoded_content = decode(self.value, KEY, algorithms=["HS256"])
+            decoded_content = decode(jwt=self.value, key=KEY, algorithms=["HS256"])
             expiration_time_str = decoded_content.get("expired", None)
             expiration_time = datetime.fromisoformat(expiration_time_str[:-6]).replace(
                 tzinfo=timezone.utc
@@ -120,7 +120,7 @@ class Token:
             expiration_time = creation_time + timedelta(
                 minutes=settings.ACCESS_TOKEN_PERIOD
             )
-        elif token_type.startswith("R"):  # Refresh token
+        elif token_type.startswith("R"):  # ? Refresh token
             expiration_time = creation_time + timedelta(
                 days=settings.REFRESH_TOKEN_PERIOD
             )
@@ -221,7 +221,7 @@ class AccessToken(Token):
                 self.value = access_token.value
                 return None
             else:
-                return refresh_check
+                return check_res
         except Exception as e:
             return -1
 

@@ -21,11 +21,15 @@ def encrypt(data: str) -> bytes:
         None
     """
 
-    cipher = Cipher(algorithms.AES(CYPHER_KEY), modes.ECB(), backend=default_backend())
+    cipher = Cipher(
+        algorithm=algorithms.AES(key=CYPHER_KEY),
+        mode=modes.ECB(),
+        backend=default_backend(),
+    )
     encryptor = cipher.encryptor()
-    padder = padding.PKCS7(128).padder()
-    padded_message = padder.update(data.encode()) + padder.finalize()
-    ciphertext = encryptor.update(padded_message) + encryptor.finalize()
+    padder = padding.PKCS7(block_size=128).padder()
+    padded_message = padder.update(data=data.encode()) + padder.finalize()
+    ciphertext = encryptor.update(data=padded_message) + encryptor.finalize()
     return ciphertext
 
 
@@ -43,11 +47,15 @@ def decrypt(data: bytes) -> str:
         None
     """
 
-    cipher = Cipher(algorithms.AES(CYPHER_KEY), modes.ECB(), backend=default_backend())
+    cipher = Cipher(
+        algorithm=algorithms.AES(key=CYPHER_KEY),
+        mode=modes.ECB(),
+        backend=default_backend(),
+    )
     decryptor = cipher.decryptor()
-    decrypted_message = decryptor.update(data) + decryptor.finalize()
-    unpadder = padding.PKCS7(128).unpadder()
-    unpadded_message = unpadder.update(decrypted_message) + unpadder.finalize()
+    decrypted_message = decryptor.update(data=data) + decryptor.finalize()
+    unpadder = padding.PKCS7(block_size=128).unpadder()
+    unpadded_message = unpadder.update(data=decrypted_message) + unpadder.finalize()
     return str(unpadded_message.decode())
 
 
@@ -65,7 +73,7 @@ def hash_password(password: str) -> bytes:
         None
     """
     salt = gensalt()
-    hashed_password = hashpw(password.encode("utf-8"), salt)
+    hashed_password = hashpw(password=password.encode(encoding="utf-8"), salt=salt)
     return hashed_password
 
 
@@ -84,5 +92,7 @@ def check_password(input_password: str, stored_password: bytes) -> bool:
         None
     """
 
-    new_hash = hashpw(input_password.encode(encoding="utf-8"), stored_password)
+    new_hash = hashpw(
+        password=input_password.encode(encoding="utf-8"), salt=stored_password
+    )
     return new_hash == stored_password
