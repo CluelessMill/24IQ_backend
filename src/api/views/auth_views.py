@@ -1,6 +1,6 @@
-from urllib import response
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from os import path, makedirs
 
 from ..decorators.response import response_handler
 from ..models import User
@@ -8,8 +8,7 @@ from ..serializers import UserSerializer
 from ..utils.cript_utils import decrypt
 from ..utils.request_utils import check_not_none
 from ..utils.token_utils import AccessToken, RefreshToken, to_message
-from ..utils.user_utils import authenticate_user, check_is_unique, generate_nickname
-
+from ..utils.user_utils import authenticate_user, check_is_unique, generate_nickname, generate_profile_picture
 
 class SignInAPIView(APIView):
     @response_handler
@@ -56,7 +55,7 @@ class SignInAPIView(APIView):
 
 
 class SignUpAPIView(APIView):
-    @response_handler
+    # @response_handler
     def post(self, request) -> Response:
         password: str = request.data.get("password", "")
         email: str = request.data.get("email", "")
@@ -68,9 +67,6 @@ class SignUpAPIView(APIView):
             return Response(data="Email already exists", status=400)
 
         nickname: str = generate_nickname(email=email)
-
-        # TODO add profile image generation function
-
         input_data = {
             "nickname": nickname,
             "email": email,
@@ -79,6 +75,13 @@ class SignUpAPIView(APIView):
         serializer = UserSerializer(data=input_data)
         if serializer.is_valid():
             user: User = serializer.save()
+            profile_pic = generate_profile_picture(prompt=email)
+            directory = path.join("src", "media", "user-images", str(user.id))
+            image_path = path.join(directory, "avatar.png")
+            makedirs(name=directory, exist_ok=True)
+            profile_pic.save(fp=image_path)
+            user.profile_img = f"/media/user-images/{str(user.id)}/avatar.png"
+            user.save()
             profile_img: str = user.profile_img
             access_token, refresh_token = AccessToken, RefreshToken
             access_token.create(user=user)
@@ -139,8 +142,6 @@ class UserListDEBUG(APIView):  #! This must be removed in production
             return Response("Email already exists", status=400)
 
         nickname = generate_nickname(email=email)
-
-        # TODO add profile image generation function
 
         input_data = {
             "nickname": nickname,

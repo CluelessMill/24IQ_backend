@@ -1,8 +1,9 @@
 from hashlib import sha256
+from PIL import Image
 
 from ..models import User
 from .cript_utils import check_password, decrypt, encrypt
-
+from .functions.generate_image import encode_text_to_image
 
 def authenticate_user(
     nickname: str = None, user_id: int = None, password: str = None, email: str = None
@@ -114,6 +115,12 @@ def generate_nickname(email: str) -> str:
         is_consonant_turn = not is_consonant_turn
     while len(nickname) < 15:
         nickname += consonants[
-            int(sha256(string=nickname.encode()).hexdigest()[0], base=16) % len(consonants)
+            int(sha256(string=nickname.encode()).hexdigest()[0], base=16)
+            % len(consonants)
         ]
     return nickname
+
+def generate_profile_picture(prompt: str) -> Image.Image:
+    image_size = 400
+    encoded_image = encode_text_to_image(text=prompt, image_size=image_size)
+    return encoded_image
